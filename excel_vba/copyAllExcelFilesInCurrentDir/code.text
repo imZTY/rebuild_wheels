@@ -4,46 +4,88 @@
 'Remake from blog: https://blog.csdn.net/weixin_43144634/article/details/82689732
 Sub copyAllExcelFilesInCurrentDir()
 
-Dim mypath, myname, awbname
-Dim wb As Workbook, wbn As String
+Dim filePath, fileName, dataSaveBookName
+Dim fileToDeal As Workbook, finishNameBufferStr As String
 Dim g As Long
 Dim num As Long
-Dim box As String
+Dim usedRow As Long
 
 '@author imZTY
 'Set the file kind suffix
 fileSuffixRegex = "*.xlsx"
 'Set the max row of the sheet. A new sheet will be created while the current row number was overflowed.
-maxRowThreshold = 700000
+maxRowThreshold = 130000
+maxCellStr = "a" & maxRowThreshold  '&是无类型限制的字符串拼接符号
 
 'Turn off the ScreenUpdating can make program runs steady and smoothly.
 Application.ScreenUpdating = False
 
-mypath = ActiveWorkbook.Path
-myname = Dir(mypath & "\" & fileSuffixRegex)
+filePath = ActiveWorkbook.Path
+fileName = Dir(filePath & "\" & fileSuffixRegex)
 
-awbname = ActiveWorkbook.Name
+dataSaveBookName = ActiveWorkbook.Name
 num = 0
 
-Do While myname <> ""
-    If myname <> awbname Then
-        Set wb = Workbooks.Open(mypath & "\" & myname)
+'Init the original message of the data saving book
+With Workbooks(dataSaveBookName)
+    usedRow = ActiveSheet.Cells(ActiveSheet.Rows.Count, 1).End(xlUp).Row
+End With
+',and log it.
+Debug.Print Workbooks(dataSaveBookName).Name & " " & usedRow
+
+Do While fileName <> ""
+    Debug.Print "【" & fileName & "】"
+    'Jump the data saving book.
+    If fileName <> dataSaveBookName Then
+        Set fileToDeal = Workbooks.Open(filePath & "\" & fileName)
         num = num + 1
-        With Workbooks(1).ActiveSheet
-            .Cells(.Range("a" + maxRowThreshold).End(xlUp).Row + 2, 1) = Left(myname, Len(myname) - Len(suffixRegex) + 1)
-            For g = 1 To Sheets.Count
-                wb.Sheets(g).UsedRange.Copy .Cells(.Range("a" + maxRowThreshold).End(xlUp).Row + 1, 1)
-            Next
-            wbn = wbn & Chr(13) & wb.Name
-            wb.Close False
-        End With
+        
+        'Traverse each sheet of the book to deal.
+        For g = 1 To Sheets.Count
+            'Debug.Print maxCellStr
+            'Debug.Print TypeName(Workbooks(1).ActiveSheet.Range(maxCellStr).End(xlUp).Row)
+            'Debug.Print Workbooks(1).Name
+            Debug.Print "current row: " & usedRow
+            If (usedRow > maxRowThreshold) Then
+                With Workbooks(dataSaveBookName)
+                    Workbooks(dataSaveBookName).Sheets.Add After:=ActiveSheet
+                    newSheetIndex = .Sheets.Count
+                    .Sheets(newSheetIndex).Activate
+                    usedRow = ActiveSheet.Cells(ActiveSheet.Rows.Count, 1).End(xlUp).Row
+                    Debug.Print ActiveSheet.Name
+                End With
+                g = g - 1
+            Else
+                With Workbooks(dataSaveBookName).ActiveSheet
+                
+                    'Copy the file name. Use this if you need.
+                    '.Cells(.Range(maxCellStr).End(xlUp).Row + 2, 1) = Left(fileName, Len(fileName) - Len(fileSuffixRegex) + 1)
+                    
+                    'Do the main data copy.
+                    fileToDeal.Sheets(g).UsedRange.Copy .Cells(.Range(maxCellStr).End(xlUp).Row + 1, 1)
+                    
+                    'Chr(13) means '\n' or "换行". The finishNameBufferStr is a message buffer object.
+                    finishNameBufferStr = finishNameBufferStr & Chr(13) & fileToDeal.Name
+                    
+                    'Log message.
+                    addRow = fileToDeal.Sheets(g).Cells(fileToDeal.Sheets(g).Rows.Count, 1).End(xlUp).Row
+                    Debug.Print "finish file: " & fileName & " - " & fileToDeal.Sheets(g).Name
+                    Debug.Print "add row: " & addRow & Chr(13)
+                    
+                    'Refresh current sheet's row.
+                    usedRow = usedRow + addRow
+                    
+                    'Close file.
+                    fileToDeal.Close False
+                End With
+            End If
+        Next
     End If
-    myname = Dir
+    fileName = Dir
 Loop
 
-Range("a1").Select
 Application.ScreenUpdating = True
-MsgBox "共合并了" & num & "个工作薄下的全部工作表。如下：" & Chr(13) & wbn, vbInformation, "提示"
+MsgBox "共合并了" & num & "个工作薄下的全部工作表。如下：" & Chr(13) & finishNameBufferStr, vbInformation, "提示"
 
 End Sub
 
