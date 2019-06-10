@@ -10,11 +10,11 @@ Dim g As Long
 Dim num As Long
 Dim usedRow As Long
 
-'@author imZTY
+
 'Set the file kind suffix
 fileSuffixRegex = "*.xlsx"
 'Set the max row of the sheet. A new sheet will be created while the current row number was overflowed.
-maxRowThreshold = 130000
+maxRowThreshold = 800000
 maxCellStr = "a" & maxRowThreshold  '&是无类型限制的字符串拼接符号
 
 'Turn off the ScreenUpdating can make program runs steady and smoothly.
@@ -74,18 +74,25 @@ Do While fileName <> ""
                     
                     'Refresh current sheet's row.
                     usedRow = usedRow + addRow
-                    
-                    'Close file.
-                    fileToDeal.Close False
                 End With
             End If
         Next
+        'Close file.
+        fileToDeal.Close SaveChanges:=False
     End If
+    
     fileName = Dir
+    
+    
+    '【重要】Save data. 任务量太大时，建议加上，避免内存耗尽导致计算机无法动弹；若开启后出现文件保存问题，可去搜索引擎搜搜解决方案。
+    'Workbooks(dataSaveBookName).Save
+    
+    
 Loop
 
 Application.ScreenUpdating = True
 MsgBox "共合并了" & num & "个工作薄下的全部工作表。如下：" & Chr(13) & finishNameBufferStr, vbInformation, "提示"
 
 End Sub
+
 
