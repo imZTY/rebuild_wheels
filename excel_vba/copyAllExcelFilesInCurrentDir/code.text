@@ -90,6 +90,8 @@ Do While fileName <> ""
     
 Loop
 
+'完成，保存
+Workbooks(dataSaveBookName).Save
 Application.ScreenUpdating = True
 MsgBox "共合并了" & num & "个工作薄下的全部工作表。如下：" & Chr(13) & finishNameBufferStr, vbInformation, "提示"
 
