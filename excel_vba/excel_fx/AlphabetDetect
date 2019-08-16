@@ -1,0 +1,10 @@
+
+=IF(COUNT(FIND(CHAR(ROW($1:$26)+{64,96}),C2)),"0","1")
+
+
+
+/**
+ * From：http://club.excelhome.net/thread-1216305-1-1.html
+ * Floor2 @cmxxccxx
+ */
+ 
